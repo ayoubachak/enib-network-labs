@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<script>
+window.APPLI={};
+
+APPLI.prepare_bin_request=function(request)
+{
+  var buffer=new ArrayBuffer(2);
+  var view=new DataView(buffer);
+  view.setInt16(0, request, false);
+  return buffer;
+};
+
+APPLI.show_bin_reply=function(buffer)
+{
+  if(buffer.byteLength<2)
+  {
+    return '!!! at least 2 bytes expected ('+buffer.byteLength+' received)';
+  }
+  var view=new DataView(buffer);
+  var reply=view.getInt16(0, false);
+  var msg=''+reply;
+  if(reply==1)
+  {
+    if(buffer.byteLength==10)
+    {
+      msg+=' '+view.getFloat64(2, false);
+    }
+    else
+    {
+      msg+=' !!! 2+8 bytes expected ('+buffer.byteLength+' received)';
+    }
+  }
+  else if(reply==2)
+  {
+    if(buffer.byteLength==6)
+    {
+      msg+=' '+view.getUint32(2, false);
+    }
+    else
+    {
+      msg+=' !!! 2+4 bytes expected ('+buffer.byteLength+' received)';
+    }
+  }
+  else if(reply==3)
+  {
+    if(buffer.byteLength==14)
+    {
+      msg+=' '+view.getFloat64(2, false);
+      msg+=' '+view.getUint32(10, false);
+    }
+    else
+    {
+      msg+=' !!! 2+8+4 bytes expected ('+buffer.byteLength+' received)';
+    }
+  }
+  return msg;
+};
+
+APPLI.on_txt_http_reply=function(evt)
+{
+  document.getElementById('txt_http_log').textContent=
+    APPLI.txt_req.responseText;
+};
+
+APPLI.on_bin_http_reply=function(evt)
+{
+  document.getElementById('bin_http_log').textContent=
+    APPLI.show_bin_reply(APPLI.bin_req.response);
+};
+
+APPLI.on_ws_message=function(evt)
+{
+  if(evt.data instanceof ArrayBuffer)
+  {
+    document.getElementById('bin_ws_log').textContent=
+      APPLI.show_bin_reply(evt.data);
+  }
+  else
+  {
+    document.getElementById('txt_ws_log').textContent=
+      evt.data;
+  }
+};
+
+APPLI.http_cmd=function(request)
+{
+  if(typeof(request)=='number')
+  {
+    var buffer=APPLI.prepare_bin_request(request);
+    //
+    // ... À COMPLÉTER {B-2} ...
+    // utiliser   APPLI.bin_req   pour produire
+    // une requête HTTP   'POST'
+    // vers la ressource   '/bin'
+    // en fournissant   buffer
+    //
+    APPLI.bin_req.open('POST', '/bin', true)
+    APPLI.bin_req.send(buffer);
+  }
+  else
+  {
+    //
+    // ... À COMPLÉTER {A-2} ...
+    // utiliser   APPLI.txt_req   pour produire
+    // une requête HTTP   'POST'
+    // vers la ressource   '/txt'
+    // en fournissant   request
+    //
+    APPLI.txt_req.open('POST', '/txt', true)
+    APPLI.txt_req.send(request);
+  }
+};
+
+APPLI.ws_cmd=function(request)
+{
+  if(typeof(request)=='number')
+  {
+    var buffer=APPLI.prepare_bin_request(request);
+    //
+    // ... À COMPLÉTER {D} ...
+    // utiliser   APPLI.ws   pour produire
+    // un message WebSocket fournissant   buffer
+    //
+    APPLI.ws.send(buffer);
+  }
+  else
+  {
+    //
+    // ... À COMPLÉTER {C-2} ...
+    // utiliser   APPLI.ws   pour produire
+    // un message WebSocket fournissant   request
+    //
+    APPLI.ws.send(request);
+  }
+};
+
+window.onload=function(evt)
+{
+  APPLI.txt_req=null;
+  //
+  // ... À COMPLÉTER {A-1} ...
+  // initialiser   APPLI.txt_req   avec une XMLHttpRequest
+  // • qui fournira des réponses textuelles
+  // • la fonction qui réagira à la réception d'une réponse
+  //   sera   APPLI.on_txt_http_reply
+  //
+  APPLI.txt_req=new XMLHttpRequest();
+  APPLI.txt_req.onload=APPLI.on_txt_http_reply;
+
+  APPLI.bin_req=null;
+  //
+  // ... À COMPLÉTER {B-1} ...
+  // initialiser   APPLI.bin_req   avec une XMLHttpRequest
+  // • qui fournira des réponses binaires au format   'arraybuffer'
+  // • la fonction qui réagira à la réception d'une réponse
+  //   sera   APPLI.on_bin_http_reply
+  //
+  APPLI.bin_req=new XMLHttpRequest();
+  APPLI.bin_req.responseType='arraybuffer';
+  APPLI.bin_req.onload=APPLI.on_bin_http_reply;
+
+  APPLI.ws=null;
+  var host=window.location.hostname;
+  var port=window.location.port;
+  //
+  // ... À COMPLÉTER {C-1} ...
+  // initialiser   APPLI.ws   avec une WebSocket
+  // permettant de joindre   'ws://'+host+':'+port+'/ws'
+  // • si elle reçoit des données binaires,
+  //   ce sera au format   'arraybuffer'
+  // • la fonction qui réagira à la réception d'un message
+  //   sera   APPLI.on_ws_message
+  //
+  APPLI.ws=new WebSocket('ws://'+host+':'+port+'/ws');
+  APPLI.ws.binaryType='arraybuffer';
+  APPLI.ws.onmessage=APPLI.on_ws_message;
+};
+</script>
+</head><body>
+<hr>
+<p>[<a href="/">home</a>]</p>
+<hr>
+<p><b>txt http request:</b>&nbsp;&nbsp;
+<button onclick="APPLI.http_cmd('reset');">&nbsp;reset&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd('clock');">&nbsp;clock&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd('counter');">&nbsp;counter&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd('all');">&nbsp;all&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd('what');">&nbsp;what&nbsp;</button></p>
+<p><b>txt http reply:</b>&nbsp;&nbsp;
+<code id="txt_http_log"></code></p>
+<hr>
+<p><b>bin http request:</b>&nbsp;&nbsp;
+<button onclick="APPLI.http_cmd(0);">&nbsp;0&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd(1);">&nbsp;1&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd(2);">&nbsp;2&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd(3);">&nbsp;3&nbsp;</button>
+&mdash;
+<button onclick="APPLI.http_cmd(9);">&nbsp;9&nbsp;</button></p>
+<p><b>bin http reply:</b>&nbsp;&nbsp;
+<code id="bin_http_log"></code></p>
+<hr>
+<p><b>txt ws request:</b>&nbsp;&nbsp;
+<button onclick="APPLI.ws_cmd('reset');">&nbsp;reset&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd('clock');">&nbsp;clock&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd('counter');">&nbsp;counter&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd('all');">&nbsp;all&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd('what');">&nbsp;what&nbsp;</button></p>
+<p><b>txt ws reply:</b>&nbsp;&nbsp;
+<code id="txt_ws_log"></code></p>
+<hr>
+<p><b>bin ws request:</b>&nbsp;&nbsp;
+<button onclick="APPLI.ws_cmd(0);">&nbsp;0&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd(1);">&nbsp;1&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd(2);">&nbsp;2&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd(3);">&nbsp;3&nbsp;</button>
+&mdash;
+<button onclick="APPLI.ws_cmd(9);">&nbsp;9&nbsp;</button></p>
+<p><b>bin ws reply:</b>&nbsp;&nbsp;
+<code id="bin_ws_log"></code></p>
+<hr>
+</body></html>

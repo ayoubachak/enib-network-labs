@@ -1,0 +1,248 @@
+╔═════════════════════════════════════════════╤══════════════════════════════╗
+║ Entraînement à une épreuve pratique de HTTP │░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
+╚═════════════════════════════════════════════╧══════════════════════════════╝
+
+
+╔══════════════════════════════════════════╤═════════════════════════════════╗
+║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│ Fourniture d'un fichier en HTTP ║
+╚══════════════════════════════════════════╧═════════════════════════════════╝
+
+Le programme « prog_server.cpp » doit être un serveur HTTP qui surveille le
+port désigné par la variable « port_number ».
+[ cette variable est déjà renseignée depuis le premier argument
+  de la ligne de commande ]
+
+Dans l'immédiat, faites en sorte que, lorsqu'il reçoit une requête « GET »
+réclamant la ressource  « / », il transmette au client le contenu du fichier
+« client.html » fourni.
+Dans tous les autres cas il devra répondre au client par un message
+signifiant explicitement une erreur.
+
+╭──────╮
+│ Test ├──────────────────────────────────────────────────────────────────────
+╰──────╯
+
+Ce serveur sera sollicité par le client « firefox » afin d'atteindre en HTTP
+le port choisi pour votre serveur sur votre poste de travail.
+Vous devriez constater que lorsque la racine du site est réclamée par le
+navigateur, celui-ci obtient un page HTML qu'il affiche en faisant
+apparaître des lignes horizontales, du texte et des boutons (qui n'ont
+aucun effet pour l'instant).
+Pour tout autre demande, le navigateur doit obtenir votre message d'erreur
+explicite.
+
+Plusieurs clients doivent être en mesure d'interagir simultanément avec
+ce serveur.
+Un client doit avoir la possibilité d'enchaîner autant de cycles
+requête~~>réponse qu'il le souhaite dans la même connexion.
+Les déconnexions/reconnexions intempestives des clients ne doivent pas
+être problématiques pour le serveur.
+
+╔═════════════════════════════════════════════╤══════════════════════════════╗
+║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│ Communication HTTP textuelle ║
+╚═════════════════════════════════════════════╧══════════════════════════════╝
+
+Nous voulons désormais que notre serveur HTTP soit capable de fournir des
+données applicatives en réaction aux sollicitations des clients.
+Pour cela, il s'appuie sur les fonctionnalités applicatives du fichier
+« device.hpp ».
+
+Il devra s'apprêter à recevoir des requêtes « POST » réclamant la ressource
+« /txt » ; le contenu accompagnant cette requête sera interprété comme du
+texte et la réponse à produire sera présentée comme « text/plain ».
+La réaction dépend du contenu associé à la requête :
+• s'il s'agit de "reset", il faut :
+  • invoquer la fonction « device::reset() »,
+  • renvoyer "OK" comme réponse textuelle,
+• s'il s'agit de "clock", il faut :
+  • invoquer la fonction « device::clock() » pour obtenir son résultat
+    de type « real64_t » (un réel de 64 bits),
+  • renvoyer une ligne de texte dans laquelle est inscrite cette valeur,
+• s'il s'agit de "counter", il faut :
+  • invoquer la fonction « device::counter() » pour obtenir son résultat
+    de type « uint32_t » (un entier non-signé de 32 bits),
+  • renvoyer une ligne de texte dans laquelle est inscrite cette valeur,
+• s'il s'agit de "all", il faut :
+  • invoquer la fonction « device::clock() » pour obtenir son résultat
+    de type « real64_t » (un réel de 64 bits),
+  • invoquer la fonction « device::counter() » pour obtenir son résultat
+    de type « uint32_t » (un entier non-signé de 32 bits),
+  • renvoyer une ligne de texte dans laquelle sont inscrites ces deux
+    valeurs,
+• s'il s'agit de n'importe quoi d'autre, il faut :
+  • renvoyer "???" comme réponse textuelle,
+
+Afin que le client provoque ce comportement, il faudra compléter le
+fichier « client.html » en suivant les commentaires :
+• au niveau du point « {A-1} », pour créer l'objet de communication
+  qui permettra d'envoyer de telles requêtes et exploiter leur réponse,
+• au niveau du point « {A-2} », pour utiliser cet objet de communication
+  lorsqu'un bouton dédié est activé.
+
+╭──────╮
+│ Test ├──────────────────────────────────────────────────────────────────────
+╰──────╯
+
+En rechargeant la même page depuis le navigateur, vous devriez constater
+que l'utilisation des boutons de la ligne « txt http request: » provoque
+désormais l'affichage, sur la ligne « txt http reply: », de la réponse
+textuelle de votre serveur.
+
+Conseil : pour faciliter la mise au point, n'hésitez pas à faire afficher
+          par le serveur la requête qu'il reçoit et la réponse qu'il
+          s'apprête à renvoyer.
+
+╔═══════════════════════════════════════════════╤════════════════════════════╗
+║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│ Communication HTTP binaire ║
+╚═══════════════════════════════════════════════╧════════════════════════════╝
+
+Nous souhaitons maintenant que notre serveur HTTP soit capable d'échanger des
+données binaires avec les clients.
+
+Il devra s'apprêter à recevoir des requêtes « POST » réclamant la ressource
+« /bin » ; le contenu accompagnant cette requête sera interprété comme une
+séquence d'octets que nous interpréterons comme un « int16_t » (un entier
+signé de 16 bits) et la réponse à produire sera présentée comme
+« application/octet-stream ».
+La réaction dépend de la valeur de cet entier associé à la requête :
+• s'il s'agit de la valeur « 0 », il faut :
+  • invoquer la fonction « device::reset() »,
+  • renvoyer la requête comme réponse binaire,
+• s'il s'agit de la valeur « 1 », il faut :
+  • invoquer la fonction « device::clock() » pour obtenir son résultat
+    de type « real64_t » (un réel de 64 bits)
+  • renvoyer la requête puis ce réel comme réponse binaire,
+• s'il s'agit de la valeur « 2 », il faut :
+  • invoquer la fonction « device::counter() » pour obtenir son résultat
+    de type « uint32_t » (un entier non-signé de 32 bits)
+  • renvoyer la requête puis cet entier comme réponse binaire,
+• s'il s'agit de la valeur « 3 », il faut :
+  • invoquer la fonction « device::clock() » pour obtenir son résultat
+    de type « real64_t » (un réel de 64 bits)
+  • invoquer la fonction « device::counter() » pour obtenir son résultat
+    de type « uint32_t » (un entier non-signé de 32 bits)
+  • renvoyer la requête puis ce réel puis cet entier comme réponse binaire,
+• s'il s'agit de n'importe quoi d'autre, il faut :
+  • renvoyer une donnée binaire de type « int16_t » (un entier signé de
+    16 bits) valant « -1 » comme réponse,
+
+Indice : la longueur des données transmises en réponse est la somme des
+         tailles en octets de chaque information numérique transmise.
+
+Conseil : plutôt que de dupliquer du code à l'identique, n'hésitez pas à
+          réaliser des fonctions que vous invoquerez plusieurs fois.
+
+Consigne : toutes les communications binaires réalisées par ce serveur
+           doivent respecter les précautions usuelles en la matière.
+
+Afin que le client provoque ce comportement, il faudra compléter le
+fichier « client.html » en suivant les commentaires :
+• au niveau du point « {B-1} », pour créer l'objet de communication
+  qui permettra d'envoyer de telles requêtes et exploiter leur réponse,
+• au niveau du point « {B-2} », pour utiliser cet objet de communication
+  lorsqu'un bouton dédié est activé.
+
+╭──────╮
+│ Test ├──────────────────────────────────────────────────────────────────────
+╰──────╯
+
+En rechargeant la même page depuis le navigateur, vous devriez constater
+que l'utilisation des boutons de la ligne « bin http request: » provoque
+désormais l'affichage, sur la ligne « bin http reply: », des valeurs
+numériques transmises dans la réponse binaire de votre serveur.
+
+Conseil : pour faciliter la mise au point, n'hésitez pas à faire afficher
+          par le serveur la requête qu'il reçoit et la réponse qu'il
+          s'apprête à renvoyer.
+
+╔════════════════════════════════════════╤═══════════════════════════════════╗
+║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│ Communication WebSocket textuelle ║
+╚════════════════════════════════════════╧═══════════════════════════════════╝
+
+Nous désirons dorénavant que notre serveur HTTP soit capable de communiquer
+avec le client selon le protocole WebSocket afin d'échanger des données
+textuelles.
+
+Il devra s'apprêter à recevoir des requêtes « GET » réclamant la ressource
+« /ws » ainsi qu'un bacsulement vers le protocole « websocket».
+Dans ce cas, chaque message textuel reçu par ce moyen devra être interprété
+et donner lieu à une réponse selon le même principe que la communication
+HTTP textuelle précédente.
+
+Afin que le client provoque ce comportement, il faudra compléter le
+fichier « client.html » en suivant les commentaires :
+• au niveau du point « {C-1} », pour créer l'objet de communication
+  qui permettra d'envoyer de telles requêtes et exploiter leur réponse,
+• au niveau du point « {C-2} », pour utiliser cet objet de communication
+  lorsqu'un bouton dédié est activé.
+
+╭──────╮
+│ Test ├──────────────────────────────────────────────────────────────────────
+╰──────╯
+
+En rechargeant la même page depuis le navigateur, vous devriez constater
+que l'utilisation des boutons de la ligne « txt ws request: » provoque
+désormais l'affichage, sur la ligne « txt ws reply: », de la réponse
+textuelle de votre serveur.
+
+Conseil : pour faciliter la mise au point, n'hésitez pas à faire afficher
+          par le serveur la requête qu'il reçoit et la réponse qu'il
+          s'apprête à renvoyer.
+
+╔══════════════════════════════════════════╤═════════════════════════════════╗
+║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│ Communication WebSocket binaire ║
+╚══════════════════════════════════════════╧═════════════════════════════════╝
+
+Nous terminerons enfin en offrant le possibilité d'échanger des
+données binaires selon le protocole WebSocket.
+
+Le serveur devra maintenant envisager le cas où les messages reçus par
+le protocole WebSocket sont de nature binaire.
+Dans ce cas, chaque message binaire reçu par ce moyen devra être interprété
+et donner lieu à une réponse selon le même principe que la communication
+HTTP binaire précédente.
+
+Il y a toutefois une précaution supplémentaire à considérer : lorsque la
+réponse doit être composée de plusieurs valeurs numériques, il ne faut
+pas produire plusieurs réponses distinctes, mais une seule contenant ces
+multiples valeurs à la suite.
+Pour ceci, il vous sera nécessaire de préparer toutes ces données binaires
+à la suite les unes des autres dans un tampon (buffer), afin d'expédier ce
+tampon en un seul envoi.
+L'utilitaire « crs::pack_bytes() » vous facilitera cette tâche ; voici un
+exemple d'utilisation :
+    real64_t value_a= ... ;
+    uint32_t value_b= ... ;
+    int16_t  value_c= ... ;
+    real64_t value_d= ... ;
+    char buffer[100];
+    int amount=crs::pack_bytes(buffer, sizeof(buffer),
+                               value_a, value_b, value_c, value_d);
+    // now « buffer » contains « amount » initialised bytes
+    // these bytes are representative of the four provided values (in order)
+(le nombre de valeurs ainsi préparées est bien entendu variable)
+
+Afin que le client provoque ce comportement, il faudra compléter le
+fichier « client.html » en suivant les commentaires :
+• au niveau du point « {C-1} », pour s'assurer du fait que l'objet de
+  communication créé précédemment utilise le bon format pour présenter
+  les données binaires,
+• au niveau du point « {D} », pour utiliser cet objet de communication
+  lorsqu'un bouton dédié est activé.
+
+╭──────╮
+│ Test ├──────────────────────────────────────────────────────────────────────
+╰──────╯
+
+En rechargeant la même page depuis le navigateur, vous devriez constater
+que l'utilisation des boutons de la ligne « bin ws request: » provoque
+désormais l'affichage, sur la ligne « bin ws reply: », des valeurs
+numériques transmises dans la réponse binaire de votre serveur.
+
+Conseil : pour faciliter la mise au point, n'hésitez pas à faire afficher
+          par le serveur la requête qu'il reçoit et la réponse qu'il
+          s'apprête à renvoyer.
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
+╚════════════════════════════════════════════════════════════════════════════╝

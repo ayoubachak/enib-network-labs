@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "f:/Enib/Resaux/CRS_L05_UdpSocket_solution",
-      "program": "f:/Enib/Resaux/CRS_L05_UdpSocket_solution/build/Debug/outDebug",
+      "cwd": "f:/Enib/Resaux/CRS_L06_TcpSocket_solution",
+      "program": "f:/Enib/Resaux/CRS_L06_TcpSocket_solution/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
